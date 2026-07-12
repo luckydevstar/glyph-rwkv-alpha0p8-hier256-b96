@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "name": "glyph-rwkv-alpha0p8-hier256-b96",
+  "entrypoints": {
+    "compress": ["python3", "/app/client_hier256.py", "compress", "--input", "{input}", "--output", "{output}"],
+    "decompress": ["python3", "/app/client_hier256.py", "decompress", "--input", "{input}", "--output", "{output}"]
+  },
+  "image": "REPLACED_BY_WORKFLOW_WITH_IMMUTABLE_GHCR_DIGEST",
+  "warmup": {
+    "command": ["python3", "/app/warmup_hier256.py"],
+    "timeout_secs": 540
+  },
+  "resources": {
+    "vram_gb": 20,
+    "ram_gb": 8
+  },
+  "license": "MIT"
+}
+
