@@ -17,10 +17,10 @@ The model URL is public and commit-pinned. The workflow downloads it without an
 HF token and refuses a revision that is not a 40-character commit or a model
 whose size/SHA differs.
 
-The image adds Debian's minimal `openssh-client` package solely so a Vast RTX
-4090 validation instance can establish its SSH tunnel. Validators sever image
-network access before scored compression/decompression, and the codec/model
-files remain independently SHA-bound.
+The image adds Debian's minimal `openssh-client` and `openssh-server` packages
+solely so a Vast RTX 4090 validation instance can establish its SSH tunnel.
+Validators sever image network access before scored compression/decompression,
+and the codec/model files remain independently SHA-bound.
 
 ## Publish procedure
 

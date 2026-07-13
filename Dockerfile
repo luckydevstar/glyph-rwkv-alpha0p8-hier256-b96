@@ -11,11 +11,11 @@ LABEL org.opencontainers.image.title="Glyph RWKV alpha-0.8 hierarchical-256 B96"
       org.opencontainers.image.licenses="MIT"
 
 # Vast's SSH validation launcher opens a reverse tunnel from inside the rented
-# container.  The accepted UID114 base has sshd support injected by Vast but no
-# ssh client binary, so include the minimal client package in the release image.
+# container and starts sshd inside it, so include both minimal OpenSSH packages
+# required by that launcher in the release image.
 # Glyph evaluation still seals all network access before scored entrypoints run.
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssh-client \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssh-client openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --chmod=0444 selected-model.pth /opt/model/rwkv7-g1g-1.5b-20260526-ctx8192.pth
