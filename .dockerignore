@@ -1,6 +1,12 @@
-**
+*
+!overlay/
 !Dockerfile
-!selected-model.pth
-!client_hier256.py
-!warmup_hier256.py
-
+!.dockerignore
+!overlay/coder_hier256.py
+!overlay/compress.py
+!overlay/decompress.py
+!overlay/hier256_core.py
+!overlay/mbclient.py
+!overlay/server_hier256.py
+!overlay/warmup.py
+!overlay/warmup_uid95.py

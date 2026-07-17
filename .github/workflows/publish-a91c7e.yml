@@ -1,0 +1,99 @@
+name: Publish immutable image
+
+on:
+  push:
+    branches:
+      - release-a91c7e-20260717
+  workflow_dispatch:
+
+concurrency:
+  group: a91c7e-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/luckydevstar/a91c7e
+  IMAGE_TAG: "20260717-03"
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'luckydevstar/glyph-rwkv-alpha0p8-hier256-b96' &&
+      github.ref == 'refs/heads/release-a91c7e-20260717'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Reclaim runner disk
+        run: scripts/free-disk-space.sh
+
+      - name: Log in to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Build and push exact context
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          pull: true
+          no-cache: true
+          push: true
+          provenance: false
+          sbom: false
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Record immutable identity
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          mkdir -p release-metadata
+          jq -n \
+            --arg image "${IMAGE_NAME}@${IMAGE_DIGEST}" \
+            --arg tag "${IMAGE_NAME}:${IMAGE_TAG}" \
+            --arg digest "$IMAGE_DIGEST" \
+            --arg source_revision "$GITHUB_SHA" \
+            '{image: $image, tag: $tag, digest: $digest,
+              source_revision: $source_revision}' \
+            > release-metadata/image.json
+          printf 'Immutable image: `%s@%s`\n' "$IMAGE_NAME" "$IMAGE_DIGEST" \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable identity
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: a91c7e-${{ github.sha }}
+          path: release-metadata/image.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify anonymous immutable pull
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: scripts/verify-anonymous-pull.sh "$IMAGE_NAME" "$IMAGE_DIGEST"

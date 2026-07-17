@@ -4,8 +4,8 @@ set -euo pipefail
 echo "Disk before cleanup:"
 df -h /
 
-# The 3.06 GB checkpoint, build context, base layers, and output layer coexist
-# during the build. Remove large hosted-runner SDKs that this workflow never uses.
+# The build context, base layers, and output layer coexist during the build.
+# Remove hosted-runner SDKs that this workflow does not use.
 sudo rm -rf \
   /usr/local/lib/android \
   /usr/share/dotnet \
@@ -26,4 +26,3 @@ if (( available_kib < minimum_kib )); then
   echo "Use a larger GitHub-hosted runner rather than risking an incomplete push." >&2
   exit 1
 fi
-
